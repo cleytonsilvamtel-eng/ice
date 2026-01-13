@@ -422,7 +422,7 @@
                 </div>
 
                 <label>💰 Valor pago pelo cliente:</label>
-                <input type="number" id="amountPaid" placeholder="Ex: 20.00" step="0.01" oninput="calculateChange()">
+                <input type="text" id="amountPaid" placeholder="Ex: 13.20 ou 13,20" inputmode="decimal" oninput="calculateChange()">
 
                 <div class="cart-summary" style="background: #e8f5e9;">
                     <p><strong>Troco:</strong> <span style="color: #34c759; font-size: 18px; font-weight: bold;">R$ <span id="changeValue">0.00</span></span></p>
@@ -604,7 +604,8 @@
         }
 
         function calculateChange() {
-            const paid = parseFloat(document.getElementById('amountPaid').value) || 0;
+            const paidValue = document.getElementById('amountPaid').value.replace(',', '.');
+            const paid = parseFloat(paidValue) || 0;
             const total = parseFloat(document.getElementById('totalValue').textContent) || 0;
             const change = Math.max(0, paid - total);
             document.getElementById('changeValue').textContent = change.toFixed(2);
@@ -617,11 +618,22 @@
                 return;
             }
 
-            const paid = parseFloat(document.getElementById('amountPaid').value) || 0;
             const total = totalItems * PRICE;
+            const paidValue = document.getElementById('amountPaid').value.replace(',', '.');
+            const paid = parseFloat(paidValue) || 0;
             
-            if (paid < total) {
-                alert('❌ Valor pago insuficiente!');
+            if (paid <= 0) {
+                alert('❌ Digite o valor pago pelo cliente!');
+                return;
+            }
+            
+            // Arredonda para 2 casas decimais para evitar problemas de precisão
+            const totalRounded = Math.round(total * 100) / 100;
+            const paidRounded = Math.round(paid * 100) / 100;
+            
+            if (paidRounded < totalRounded) {
+                const falta = (totalRounded - paidRounded).toFixed(2);
+                alert(`❌ Valor pago insuficiente!\n\nTotal: R$ ${totalRounded.toFixed(2)}\nPago: R$ ${paidRounded.toFixed(2)}\nFalta: R$ ${falta}`);
                 return;
             }
 
