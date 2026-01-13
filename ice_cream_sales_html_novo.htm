@@ -1,0 +1,315 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Controle de Sorvetes</title>
+
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Sorvetes">
+
+<style>
+body {
+    margin: 0;
+    font-family: -apple-system, BlinkMacSystemFont, Arial, sans-serif;
+    background: #f2f2f7;
+}
+header {
+    padding: 16px;
+    background: white;
+    text-align: center;
+    border-bottom: 1px solid #ddd;
+}
+nav {
+    display: flex;
+    gap: 6px;
+    padding: 8px;
+    background: white;
+    position: sticky;
+    top: 0;
+    z-index: 10;
+}
+.nav-btn {
+    flex: 1;
+    padding: 10px;
+    border: none;
+    border-radius: 10px;
+    background: #e5e5ea;
+}
+.nav-btn.active {
+    background: #007aff;
+    color: white;
+}
+.tab { display: none; padding: 12px; }
+.tab.active { display: block; }
+
+.card {
+    background: white;
+    border-radius: 14px;
+    padding: 12px;
+    margin-bottom: 10px;
+}
+.item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 6px;
+}
+button {
+    border: none;
+    border-radius: 8px;
+    padding: 6px 12px;
+    font-size: 16px;
+}
+.add { background: #34c759; color: white; }
+.remove { background: #ff3b30; color: white; }
+.primary { background: #007aff; color: white; width: 100%; margin-top: 10px; }
+.disabled { background: #c7c7cc; color: #666; }
+.esgotado { color: #ff3b30; font-weight: bold; }
+
+input {
+    width: 100%;
+    padding: 8px;
+    margin-top: 6px;
+    border-radius: 8px;
+    border: 1px solid #ccc;
+}
+</style>
+</head>
+
+<body>
+
+<header>
+<h2>🍦 Controle de Sorvetes</h2>
+</header>
+
+<nav>
+<button class="nav-btn active" onclick="showTab('vendas',this)">Vendas</button>
+<button class="nav-btn" onclick="showTab('estoque',this)">Estoque</button>
+<button class="nav-btn" onclick="showTab('gerenciar',this)">Gerenciar</button>
+<button class="nav-btn" onclick="showTab('historico',this)">Histórico</button>
+</nav>
+
+<!-- VENDAS -->
+<div id="tab-vendas" class="tab active">
+<div id="vendasList"></div>
+
+<div class="card">
+<h3>🛒 Carrinho</h3>
+<div id="cartItems"></div>
+
+<p><strong>Total de itens:</strong> <span id="totalItems">0</span></p>
+<p><strong>Total:</strong> R$ <span id="totalValue">0.00</span></p>
+
+<label>💰 Valor pago:</label>
+<input type="number" id="amountPaid" placeholder="Ex: 20" oninput="calculateChange()">
+
+<p><strong>Troco:</strong> R$ <span id="changeValue">0.00</span></p>
+
+<button class="primary" onclick="finalizeSale()">✅ Finalizar Venda</button>
+</div>
+</div>
+
+<!-- ESTOQUE -->
+<div id="tab-estoque" class="tab">
+<div id="estoqueList"></div>
+<button class="primary" onclick="copyStockToWhatsApp()">📤 Copiar estoque para WhatsApp</button>
+</div>
+
+<!-- GERENCIAR -->
+<div id="tab-gerenciar" class="tab">
+
+<div class="card">
+<h3>➕ Cadastrar novo sabor</h3>
+<input id="newName" placeholder="Nome do sabor">
+<input id="newEmoji" placeholder="Emoji 🍓">
+<input id="newQty" type="number" placeholder="Quantidade inicial">
+<button class="primary" onclick="addFlavor()">Cadastrar</button>
+</div>
+
+<div class="card">
+<h3>🗑️ Remover sabor</h3>
+<div id="removeList"></div>
+</div>
+
+</div>
+
+<!-- HISTÓRICO -->
+<div id="tab-historico" class="tab">
+    <button class="remove" style="width:100%; margin-bottom:10px;"
+            onclick="clearAllSales()">
+        🗑️ Limpar histórico de vendas
+    </button>
+
+    <div id="historyList"></div>
+</div>
+
+
+<script>
+const PRICE = 2.20;
+
+let stock = JSON.parse(localStorage.getItem('stock')) || {
+    "Chocolate": { emoji:"🍫", qty:5 },
+    "Morango": { emoji:"🍓", qty:5 }
+};
+let cart = {};
+let sales = JSON.parse(localStorage.getItem('sales')) || [];
+
+function save(){
+    localStorage.setItem('stock',JSON.stringify(stock));
+    localStorage.setItem('sales',JSON.stringify(sales));
+}
+
+function showTab(tab,btn){
+    document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
+    document.querySelectorAll('.nav-btn').forEach(b=>b.classList.remove('active'));
+    document.getElementById(`tab-${tab}`).classList.add('active');
+    btn.classList.add('active');
+}
+
+/* VENDAS */
+function renderSales(){
+    const el=document.getElementById('vendasList');
+    el.innerHTML='';
+    Object.entries(stock).forEach(([n,d])=>{
+        const off=d.qty<=0;
+        el.innerHTML+=`
+        <div class="card item">
+        <span>${d.emoji} ${n} ${off?'<span class="esgotado">(ESGOTADO)</span>':`(${d.qty})`}</span>
+        <button class="add ${off?'disabled':''}" ${off?'':'onclick="addToCart(\''+n+'\')"' }>+</button>
+        </div>`;
+    });
+}
+
+function addToCart(n){
+    if(stock[n].qty<=(cart[n]||0))return;
+    cart[n]=(cart[n]||0)+1;
+    renderCart();
+}
+
+function renderCart(){
+    const el=document.getElementById('cartItems');
+    el.innerHTML='';
+    let total=0;
+    Object.entries(cart).forEach(([n,q])=>{
+        total+=q;
+        el.innerHTML+=`${stock[n].emoji} ${n} x${q}<br>`;
+    });
+    document.getElementById('totalItems').innerText=total;
+    document.getElementById('totalValue').innerText=(total*PRICE).toFixed(2);
+    calculateChange();
+}
+
+function calculateChange(){
+    const paid=parseFloat(amountPaid.value)||0;
+    const total=parseFloat(totalValue.innerText)||0;
+    changeValue.innerText=(paid-total>=0?(paid-total).toFixed(2):'0.00');
+}
+
+function finalizeSale(){
+    const totalItems=Object.values(cart).reduce((a,b)=>a+b,0);
+    if(totalItems===0)return alert('Carrinho vazio');
+    const paid=parseFloat(amountPaid.value)||0;
+    const total=totalItems*PRICE;
+    if(paid<total)return alert('Valor insuficiente');
+
+    Object.entries(cart).forEach(([n,q])=>stock[n].qty-=q);
+    sales.unshift({date:new Date().toLocaleString('pt-BR'),items:{...cart}});
+    cart={};
+    amountPaid.value='';
+    save();
+    renderAll();
+    alert('Venda concluída!');
+}
+
+/* ESTOQUE */
+function renderStock(){
+    const el=document.getElementById('estoqueList');
+    el.innerHTML='';
+    Object.entries(stock).forEach(([n,d])=>{
+        el.innerHTML+=`
+        <div class="card item">
+        <span>${d.emoji} ${n}: ${d.qty}</span>
+        <div>
+        <button class="add" onclick="adjustStock('${n}',1)">+</button>
+        <button class="remove" onclick="adjustStock('${n}',-1)">-</button>
+        </div>
+        </div>`;
+    });
+}
+
+/* GERENCIAR */
+function addFlavor(){
+    const n=newName.value.trim();
+    if(!n||stock[n])return alert('Nome inválido ou já existe');
+    stock[n]={emoji:newEmoji.value||'🍦',qty:parseInt(newQty.value)||0};
+    newName.value=newEmoji.value=newQty.value='';
+    save();
+    renderAll();
+}
+
+function renderRemove(){
+    const el=document.getElementById('removeList');
+    el.innerHTML='';
+    Object.keys(stock).forEach(n=>{
+        el.innerHTML+=`
+        <div class="item">
+        ${stock[n].emoji} ${n}
+        <button class="remove" onclick="removeFlavor('${n}')">Excluir</button>
+        </div>`;
+    });
+}
+
+function removeFlavor(n){
+    if(!confirm(`Excluir ${n}?`))return;
+    delete stock[n];
+    save();
+    renderAll();
+}
+
+/* HISTÓRICO */
+function renderHistory(){
+    historyList.innerHTML='';
+    sales.forEach(s=>{
+        historyList.innerHTML+=`<div class="card"><strong>${s.date}</strong><br>${Object.entries(s.items).map(i=>i[0]+' x'+i[1]).join(', ')}</div>`;
+    });
+}
+
+/* WHATSAPP */
+function copyStockToWhatsApp(){
+    let m='🌞 Oi, pessoal! Atenção! 🚨🍦\n\nPara aliviar esse calor, temos picolés por apenas *R$ 2,20* 😋❄️\n\n👉 *Sabores disponíveis:*\n\n';
+    Object.entries(stock).filter(i=>i[1].qty>0).forEach(([n,d])=>m+=`${d.emoji} ${n} – ${d.qty} unidades\n`);
+    m+='\n🍦 Garanta o seu agora!';
+    navigator.clipboard.writeText(m);
+    alert('Texto copiado!');
+}
+
+function adjustStock(n,v){
+    stock[n].qty=Math.max(0,stock[n].qty+v);
+    save(); renderAll();
+}
+
+function renderAll(){
+    renderSales();
+    renderCart();
+    renderStock();
+    renderHistory();
+    renderRemove();
+}
+renderAll();
+
+function clearAllSales() {
+    if (!confirm(
+        '⚠️ ATENÇÃO!\n\nDeseja apagar TODO o histórico de vendas?\n\nEssa ação NÃO pode ser desfeita.'
+    )) return;
+
+    sales = [];
+    save();
+    renderHistory();
+
+    alert('✅ Histórico de vendas apagado com sucesso!');
+}
+
+</script>
+</body>
+</html>
