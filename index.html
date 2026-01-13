@@ -1,315 +1,851 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Controle de Sorvetes</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>Controle de Sorvetes 🍦</title>
+    
+    <!-- PWA Meta Tags -->
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="Sorvetes">
+    <meta name="theme-color" content="#007aff">
+    
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent;
+        }
 
-<meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-title" content="Sorvetes">
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Arial, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding-bottom: 80px;
+        }
 
-<style>
-body {
-    margin: 0;
-    font-family: -apple-system, BlinkMacSystemFont, Arial, sans-serif;
-    background: #f2f2f7;
-}
-header {
-    padding: 16px;
-    background: white;
-    text-align: center;
-    border-bottom: 1px solid #ddd;
-}
-nav {
-    display: flex;
-    gap: 6px;
-    padding: 8px;
-    background: white;
-    position: sticky;
-    top: 0;
-    z-index: 10;
-}
-.nav-btn {
-    flex: 1;
-    padding: 10px;
-    border: none;
-    border-radius: 10px;
-    background: #e5e5ea;
-}
-.nav-btn.active {
-    background: #007aff;
-    color: white;
-}
-.tab { display: none; padding: 12px; }
-.tab.active { display: block; }
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 0;
+        }
 
-.card {
-    background: white;
-    border-radius: 14px;
-    padding: 12px;
-    margin-bottom: 10px;
-}
-.item {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 6px;
-}
-button {
-    border: none;
-    border-radius: 8px;
-    padding: 6px 12px;
-    font-size: 16px;
-}
-.add { background: #34c759; color: white; }
-.remove { background: #ff3b30; color: white; }
-.primary { background: #007aff; color: white; width: 100%; margin-top: 10px; }
-.disabled { background: #c7c7cc; color: #666; }
-.esgotado { color: #ff3b30; font-weight: bold; }
+        /* Header */
+        header {
+            background: white;
+            padding: 20px;
+            text-align: center;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
 
-input {
-    width: 100%;
-    padding: 8px;
-    margin-top: 6px;
-    border-radius: 8px;
-    border: 1px solid #ccc;
-}
-</style>
+        header h1 {
+            font-size: 24px;
+            color: #1a1a1a;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+        }
+
+        header p {
+            font-size: 14px;
+            color: #666;
+            margin-top: 5px;
+        }
+
+        /* Navigation Tabs */
+        nav {
+            display: flex;
+            background: white;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
+        }
+
+        nav::-webkit-scrollbar {
+            display: none;
+        }
+
+        .nav-btn {
+            flex: 1;
+            padding: 14px 10px;
+            border: none;
+            background: white;
+            font-size: 14px;
+            font-weight: 600;
+            color: #666;
+            cursor: pointer;
+            transition: all 0.3s;
+            border-bottom: 3px solid transparent;
+            white-space: nowrap;
+        }
+
+        .nav-btn.active {
+            color: #007aff;
+            border-bottom-color: #007aff;
+        }
+
+        /* Tab Content */
+        .tab {
+            display: none;
+            padding: 16px;
+            animation: fadeIn 0.3s ease;
+        }
+
+        .tab.active {
+            display: block;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* Cards */
+        .card {
+            background: white;
+            border-radius: 16px;
+            padding: 16px;
+            margin-bottom: 12px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        }
+
+        .card h3 {
+            font-size: 18px;
+            color: #1a1a1a;
+            margin-bottom: 12px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        /* Flavor Items */
+        .flavor-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px;
+            background: #f8f9fa;
+            border-radius: 12px;
+            margin-bottom: 8px;
+            transition: all 0.2s;
+        }
+
+        .flavor-item:active {
+            transform: scale(0.98);
+        }
+
+        .flavor-info {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            flex: 1;
+        }
+
+        .flavor-emoji {
+            font-size: 28px;
+        }
+
+        .flavor-details {
+            flex: 1;
+        }
+
+        .flavor-name {
+            font-weight: 600;
+            color: #1a1a1a;
+            font-size: 15px;
+        }
+
+        .flavor-qty {
+            font-size: 13px;
+            color: #666;
+            margin-top: 2px;
+        }
+
+        .flavor-qty.low {
+            color: #ff9500;
+            font-weight: 600;
+        }
+
+        .flavor-qty.out {
+            color: #ff3b30;
+            font-weight: 600;
+        }
+
+        /* Buttons */
+        button {
+            border: none;
+            border-radius: 10px;
+            padding: 10px 16px;
+            font-size: 15px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        button:active {
+            transform: scale(0.95);
+        }
+
+        .btn-add {
+            background: #34c759;
+            color: white;
+            min-width: 44px;
+        }
+
+        .btn-remove {
+            background: #ff3b30;
+            color: white;
+            min-width: 44px;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #007aff 0%, #0051d5 100%);
+            color: white;
+            width: 100%;
+            padding: 14px;
+            font-size: 16px;
+            box-shadow: 0 4px 12px rgba(0, 122, 255, 0.4);
+        }
+
+        .btn-danger {
+            background: linear-gradient(135deg, #ff3b30 0%, #d62828 100%);
+            color: white;
+            width: 100%;
+            padding: 14px;
+            font-size: 16px;
+            box-shadow: 0 4px 12px rgba(255, 59, 48, 0.4);
+        }
+
+        .btn-disabled {
+            background: #e0e0e0;
+            color: #999;
+            cursor: not-allowed;
+        }
+
+        .btn-group {
+            display: flex;
+            gap: 8px;
+        }
+
+        /* Input Fields */
+        input {
+            width: 100%;
+            padding: 12px;
+            margin-top: 8px;
+            margin-bottom: 12px;
+            border: 2px solid #e0e0e0;
+            border-radius: 10px;
+            font-size: 15px;
+            transition: all 0.3s;
+        }
+
+        input:focus {
+            outline: none;
+            border-color: #007aff;
+            box-shadow: 0 0 0 3px rgba(0, 122, 255, 0.1);
+        }
+
+        label {
+            font-weight: 600;
+            color: #1a1a1a;
+            font-size: 14px;
+            display: block;
+            margin-top: 12px;
+            margin-bottom: 4px;
+        }
+
+        /* Cart Summary */
+        .cart-summary {
+            background: #f8f9fa;
+            padding: 12px;
+            border-radius: 10px;
+            margin-bottom: 12px;
+        }
+
+        .cart-summary p {
+            display: flex;
+            justify-content: space-between;
+            margin: 8px 0;
+            font-size: 15px;
+        }
+
+        .cart-summary strong {
+            color: #1a1a1a;
+        }
+
+        .cart-items {
+            margin: 12px 0;
+            padding: 12px;
+            background: white;
+            border-radius: 10px;
+        }
+
+        .cart-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 8px 0;
+            border-bottom: 1px solid #f0f0f0;
+        }
+
+        .cart-item:last-child {
+            border-bottom: none;
+        }
+
+        /* History */
+        .history-item {
+            background: #f8f9fa;
+            padding: 12px;
+            border-radius: 10px;
+            margin-bottom: 8px;
+        }
+
+        .history-date {
+            font-size: 12px;
+            color: #666;
+            margin-bottom: 8px;
+        }
+
+        .history-items {
+            font-size: 14px;
+            color: #1a1a1a;
+            line-height: 1.6;
+        }
+
+        /* Empty State */
+        .empty-state {
+            text-align: center;
+            padding: 40px 20px;
+            color: #999;
+        }
+
+        .empty-state-icon {
+            font-size: 48px;
+            margin-bottom: 12px;
+        }
+
+        /* Stats */
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 12px;
+            margin-bottom: 16px;
+        }
+
+        .stat-card {
+            background: white;
+            padding: 16px;
+            border-radius: 12px;
+            text-align: center;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+
+        .stat-value {
+            font-size: 24px;
+            font-weight: bold;
+            color: #007aff;
+        }
+
+        .stat-label {
+            font-size: 12px;
+            color: #666;
+            margin-top: 4px;
+        }
+
+        /* Responsive */
+        @media (max-width: 480px) {
+            .flavor-emoji {
+                font-size: 24px;
+            }
+
+            .flavor-name {
+                font-size: 14px;
+            }
+
+            button {
+                padding: 8px 12px;
+                font-size: 14px;
+            }
+        }
+    </style>
 </head>
-
 <body>
+    <div class="container">
+        <!-- Header -->
+        <header>
+            <h1><span>🍦</span> Controle de Sorvetes</h1>
+            <p>Gerencie suas vendas com praticidade</p>
+        </header>
 
-<header>
-<h2>🍦 Controle de Sorvetes</h2>
-</header>
+        <!-- Navigation -->
+        <nav>
+            <button class="nav-btn active" onclick="showTab('vendas', this)">🛒 Vendas</button>
+            <button class="nav-btn" onclick="showTab('estoque', this)">📦 Estoque</button>
+            <button class="nav-btn" onclick="showTab('gerenciar', this)">⚙️ Gerenciar</button>
+            <button class="nav-btn" onclick="showTab('historico', this)">📊 Histórico</button>
+        </nav>
 
-<nav>
-<button class="nav-btn active" onclick="showTab('vendas',this)">Vendas</button>
-<button class="nav-btn" onclick="showTab('estoque',this)">Estoque</button>
-<button class="nav-btn" onclick="showTab('gerenciar',this)">Gerenciar</button>
-<button class="nav-btn" onclick="showTab('historico',this)">Histórico</button>
-</nav>
+        <!-- Tab: Vendas -->
+        <div id="tab-vendas" class="tab active">
+            <div class="stats">
+                <div class="stat-card">
+                    <div class="stat-value" id="stat-stock">0</div>
+                    <div class="stat-label">Em Estoque</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value" id="stat-cart">0</div>
+                    <div class="stat-label">No Carrinho</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value" id="stat-sales">0</div>
+                    <div class="stat-label">Vendas Hoje</div>
+                </div>
+            </div>
 
-<!-- VENDAS -->
-<div id="tab-vendas" class="tab active">
-<div id="vendasList"></div>
+            <div class="card">
+                <h3>📦 Sabores Disponíveis</h3>
+                <div id="vendasList"></div>
+            </div>
 
-<div class="card">
-<h3>🛒 Carrinho</h3>
-<div id="cartItems"></div>
+            <div class="card">
+                <h3>🛒 Carrinho</h3>
+                <div id="cartItems"></div>
+                
+                <div class="cart-summary">
+                    <p><strong>Total de itens:</strong> <span id="totalItems">0</span></p>
+                    <p><strong>Total:</strong> <span style="color: #007aff; font-size: 18px; font-weight: bold;">R$ <span id="totalValue">0.00</span></span></p>
+                </div>
 
-<p><strong>Total de itens:</strong> <span id="totalItems">0</span></p>
-<p><strong>Total:</strong> R$ <span id="totalValue">0.00</span></p>
+                <label>💰 Valor pago pelo cliente:</label>
+                <input type="number" id="amountPaid" placeholder="Ex: 20.00" step="0.01" oninput="calculateChange()">
 
-<label>💰 Valor pago:</label>
-<input type="number" id="amountPaid" placeholder="Ex: 20" oninput="calculateChange()">
+                <div class="cart-summary" style="background: #e8f5e9;">
+                    <p><strong>Troco:</strong> <span style="color: #34c759; font-size: 18px; font-weight: bold;">R$ <span id="changeValue">0.00</span></span></p>
+                </div>
 
-<p><strong>Troco:</strong> R$ <span id="changeValue">0.00</span></p>
-
-<button class="primary" onclick="finalizeSale()">✅ Finalizar Venda</button>
-</div>
-</div>
-
-<!-- ESTOQUE -->
-<div id="tab-estoque" class="tab">
-<div id="estoqueList"></div>
-<button class="primary" onclick="copyStockToWhatsApp()">📤 Copiar estoque para WhatsApp</button>
-</div>
-
-<!-- GERENCIAR -->
-<div id="tab-gerenciar" class="tab">
-
-<div class="card">
-<h3>➕ Cadastrar novo sabor</h3>
-<input id="newName" placeholder="Nome do sabor">
-<input id="newEmoji" placeholder="Emoji 🍓">
-<input id="newQty" type="number" placeholder="Quantidade inicial">
-<button class="primary" onclick="addFlavor()">Cadastrar</button>
-</div>
-
-<div class="card">
-<h3>🗑️ Remover sabor</h3>
-<div id="removeList"></div>
-</div>
-
-</div>
-
-<!-- HISTÓRICO -->
-<div id="tab-historico" class="tab">
-    <button class="remove" style="width:100%; margin-bottom:10px;"
-            onclick="clearAllSales()">
-        🗑️ Limpar histórico de vendas
-    </button>
-
-    <div id="historyList"></div>
-</div>
-
-
-<script>
-const PRICE = 2.20;
-
-let stock = JSON.parse(localStorage.getItem('stock')) || {
-    "Chocolate": { emoji:"🍫", qty:5 },
-    "Morango": { emoji:"🍓", qty:5 }
-};
-let cart = {};
-let sales = JSON.parse(localStorage.getItem('sales')) || [];
-
-function save(){
-    localStorage.setItem('stock',JSON.stringify(stock));
-    localStorage.setItem('sales',JSON.stringify(sales));
-}
-
-function showTab(tab,btn){
-    document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
-    document.querySelectorAll('.nav-btn').forEach(b=>b.classList.remove('active'));
-    document.getElementById(`tab-${tab}`).classList.add('active');
-    btn.classList.add('active');
-}
-
-/* VENDAS */
-function renderSales(){
-    const el=document.getElementById('vendasList');
-    el.innerHTML='';
-    Object.entries(stock).forEach(([n,d])=>{
-        const off=d.qty<=0;
-        el.innerHTML+=`
-        <div class="card item">
-        <span>${d.emoji} ${n} ${off?'<span class="esgotado">(ESGOTADO)</span>':`(${d.qty})`}</span>
-        <button class="add ${off?'disabled':''}" ${off?'':'onclick="addToCart(\''+n+'\')"' }>+</button>
-        </div>`;
-    });
-}
-
-function addToCart(n){
-    if(stock[n].qty<=(cart[n]||0))return;
-    cart[n]=(cart[n]||0)+1;
-    renderCart();
-}
-
-function renderCart(){
-    const el=document.getElementById('cartItems');
-    el.innerHTML='';
-    let total=0;
-    Object.entries(cart).forEach(([n,q])=>{
-        total+=q;
-        el.innerHTML+=`${stock[n].emoji} ${n} x${q}<br>`;
-    });
-    document.getElementById('totalItems').innerText=total;
-    document.getElementById('totalValue').innerText=(total*PRICE).toFixed(2);
-    calculateChange();
-}
-
-function calculateChange(){
-    const paid=parseFloat(amountPaid.value)||0;
-    const total=parseFloat(totalValue.innerText)||0;
-    changeValue.innerText=(paid-total>=0?(paid-total).toFixed(2):'0.00');
-}
-
-function finalizeSale(){
-    const totalItems=Object.values(cart).reduce((a,b)=>a+b,0);
-    if(totalItems===0)return alert('Carrinho vazio');
-    const paid=parseFloat(amountPaid.value)||0;
-    const total=totalItems*PRICE;
-    if(paid<total)return alert('Valor insuficiente');
-
-    Object.entries(cart).forEach(([n,q])=>stock[n].qty-=q);
-    sales.unshift({date:new Date().toLocaleString('pt-BR'),items:{...cart}});
-    cart={};
-    amountPaid.value='';
-    save();
-    renderAll();
-    alert('Venda concluída!');
-}
-
-/* ESTOQUE */
-function renderStock(){
-    const el=document.getElementById('estoqueList');
-    el.innerHTML='';
-    Object.entries(stock).forEach(([n,d])=>{
-        el.innerHTML+=`
-        <div class="card item">
-        <span>${d.emoji} ${n}: ${d.qty}</span>
-        <div>
-        <button class="add" onclick="adjustStock('${n}',1)">+</button>
-        <button class="remove" onclick="adjustStock('${n}',-1)">-</button>
+                <button class="btn-primary" onclick="finalizeSale()">✅ Finalizar Venda</button>
+            </div>
         </div>
-        </div>`;
-    });
-}
 
-/* GERENCIAR */
-function addFlavor(){
-    const n=newName.value.trim();
-    if(!n||stock[n])return alert('Nome inválido ou já existe');
-    stock[n]={emoji:newEmoji.value||'🍦',qty:parseInt(newQty.value)||0};
-    newName.value=newEmoji.value=newQty.value='';
-    save();
-    renderAll();
-}
+        <!-- Tab: Estoque -->
+        <div id="tab-estoque" class="tab">
+            <div class="card">
+                <h3>📦 Ajustar Estoque</h3>
+                <div id="estoqueList"></div>
+            </div>
+            <button class="btn-primary" onclick="copyStockToWhatsApp()">📤 Copiar Estoque para WhatsApp</button>
+        </div>
 
-function renderRemove(){
-    const el=document.getElementById('removeList');
-    el.innerHTML='';
-    Object.keys(stock).forEach(n=>{
-        el.innerHTML+=`
-        <div class="item">
-        ${stock[n].emoji} ${n}
-        <button class="remove" onclick="removeFlavor('${n}')">Excluir</button>
-        </div>`;
-    });
-}
+        <!-- Tab: Gerenciar -->
+        <div id="tab-gerenciar" class="tab">
+            <div class="card">
+                <h3>➕ Adicionar Novo Sabor</h3>
+                <label>Nome do sabor:</label>
+                <input id="newName" placeholder="Ex: Pistache">
+                
+                <label>Emoji:</label>
+                <input id="newEmoji" placeholder="🍦" maxlength="4">
+                
+                <label>Quantidade inicial:</label>
+                <input id="newQty" type="number" placeholder="10" value="10">
+                
+                <button class="btn-primary" onclick="addFlavor()">➕ Adicionar Sabor</button>
+            </div>
 
-function removeFlavor(n){
-    if(!confirm(`Excluir ${n}?`))return;
-    delete stock[n];
-    save();
-    renderAll();
-}
+            <div class="card">
+                <h3>📝 Sabores Cadastrados</h3>
+                <div id="removeList"></div>
+            </div>
+        </div>
 
-/* HISTÓRICO */
-function renderHistory(){
-    historyList.innerHTML='';
-    sales.forEach(s=>{
-        historyList.innerHTML+=`<div class="card"><strong>${s.date}</strong><br>${Object.entries(s.items).map(i=>i[0]+' x'+i[1]).join(', ')}</div>`;
-    });
-}
+        <!-- Tab: Histórico -->
+        <div id="tab-historico" class="tab">
+            <div class="card">
+                <h3>📊 Histórico de Vendas</h3>
+                <button class="btn-danger" onclick="clearAllSales()" style="margin-bottom: 16px;">
+                    🗑️ Limpar Todo o Histórico
+                </button>
+                <div id="historyList"></div>
+            </div>
+        </div>
+    </div>
 
-/* WHATSAPP */
-function copyStockToWhatsApp(){
-    let m='🌞 Oi, pessoal! Atenção! 🚨🍦\n\nPara aliviar esse calor, temos picolés por apenas *R$ 2,20* 😋❄️\n\n👉 *Sabores disponíveis:*\n\n';
-    Object.entries(stock).filter(i=>i[1].qty>0).forEach(([n,d])=>m+=`${d.emoji} ${n} – ${d.qty} unidades\n`);
-    m+='\n🍦 Garanta o seu agora!';
-    navigator.clipboard.writeText(m);
-    alert('Texto copiado!');
-}
+    <script>
+        const PRICE = 2.20;
 
-function adjustStock(n,v){
-    stock[n].qty=Math.max(0,stock[n].qty+v);
-    save(); renderAll();
-}
+        let stock = JSON.parse(localStorage.getItem('stock')) || {
+            "Chocolate": { emoji: "🍫", qty: 5 },
+            "Morango": { emoji: "🍓", qty: 5 },
+            "Limão": { emoji: "🍋", qty: 5 }
+        };
+        
+        let cart = {};
+        let sales = JSON.parse(localStorage.getItem('sales')) || [];
 
-function renderAll(){
-    renderSales();
-    renderCart();
-    renderStock();
-    renderHistory();
-    renderRemove();
-}
-renderAll();
+        function save() {
+            localStorage.setItem('stock', JSON.stringify(stock));
+            localStorage.setItem('sales', JSON.stringify(sales));
+        }
 
-function clearAllSales() {
-    if (!confirm(
-        '⚠️ ATENÇÃO!\n\nDeseja apagar TODO o histórico de vendas?\n\nEssa ação NÃO pode ser desfeita.'
-    )) return;
+        function showTab(tab, btn) {
+            document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+            document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+            document.getElementById(`tab-${tab}`).classList.add('active');
+            btn.classList.add('active');
+            
+            if (tab === 'historico') renderHistory();
+        }
 
-    sales = [];
-    save();
-    renderHistory();
+        function updateStats() {
+            const totalStock = Object.values(stock).reduce((sum, item) => sum + item.qty, 0);
+            const totalCart = Object.values(cart).reduce((sum, qty) => sum + qty, 0);
+            const today = new Date().toLocaleDateString('pt-BR');
+            const salesToday = sales.filter(s => s.date.includes(today)).length;
+            
+            document.getElementById('stat-stock').textContent = totalStock;
+            document.getElementById('stat-cart').textContent = totalCart;
+            document.getElementById('stat-sales').textContent = salesToday;
+        }
 
-    alert('✅ Histórico de vendas apagado com sucesso!');
-}
+        /* VENDAS */
+        function renderSales() {
+            const el = document.getElementById('vendasList');
+            el.innerHTML = '';
+            
+            const entries = Object.entries(stock);
+            if (entries.length === 0) {
+                el.innerHTML = '<div class="empty-state"><div class="empty-state-icon">📦</div><p>Nenhum sabor cadastrado</p></div>';
+                return;
+            }
 
-</script>
+            entries.forEach(([name, data]) => {
+                const inCart = cart[name] || 0;
+                const available = data.qty - inCart;
+                const isOut = available <= 0;
+                const isLow = available > 0 && available <= 3;
+
+                const item = document.createElement('div');
+                item.className = 'flavor-item';
+                item.innerHTML = `
+                    <div class="flavor-info">
+                        <div class="flavor-emoji">${data.emoji}</div>
+                        <div class="flavor-details">
+                            <div class="flavor-name">${name}</div>
+                            <div class="flavor-qty ${isOut ? 'out' : isLow ? 'low' : ''}">
+                                ${isOut ? '❌ ESGOTADO' : `${available} disponíveis`}
+                                ${inCart > 0 ? ` • ${inCart} no carrinho` : ''}
+                            </div>
+                        </div>
+                    </div>
+                    <button class="${isOut ? 'btn-disabled' : 'btn-add'}" 
+                            ${isOut ? 'disabled' : ''} 
+                            onclick="addToCart('${name}')">+</button>
+                `;
+                el.appendChild(item);
+            });
+        }
+
+        function addToCart(name) {
+            const available = stock[name].qty - (cart[name] || 0);
+            if (available <= 0) return;
+            
+            cart[name] = (cart[name] || 0) + 1;
+            renderCart();
+            renderSales();
+            updateStats();
+        }
+
+        function removeFromCart(name) {
+            if (cart[name] > 1) {
+                cart[name]--;
+            } else {
+                delete cart[name];
+            }
+            renderCart();
+            renderSales();
+            updateStats();
+        }
+
+        function renderCart() {
+            const el = document.getElementById('cartItems');
+            const entries = Object.entries(cart);
+            
+            if (entries.length === 0) {
+                el.innerHTML = '<div class="empty-state"><div class="empty-state-icon">🛒</div><p>Carrinho vazio</p></div>';
+                document.getElementById('totalItems').textContent = '0';
+                document.getElementById('totalValue').textContent = '0.00';
+                calculateChange();
+                return;
+            }
+
+            el.innerHTML = '<div class="cart-items"></div>';
+            const itemsContainer = el.querySelector('.cart-items');
+            
+            let total = 0;
+            entries.forEach(([name, qty]) => {
+                total += qty;
+                const item = document.createElement('div');
+                item.className = 'cart-item';
+                item.innerHTML = `
+                    <span>${stock[name].emoji} ${name} x${qty}</span>
+                    <button class="btn-remove" onclick="removeFromCart('${name}')">−</button>
+                `;
+                itemsContainer.appendChild(item);
+            });
+
+            document.getElementById('totalItems').textContent = total;
+            document.getElementById('totalValue').textContent = (total * PRICE).toFixed(2);
+            calculateChange();
+        }
+
+        function calculateChange() {
+            const paid = parseFloat(document.getElementById('amountPaid').value) || 0;
+            const total = parseFloat(document.getElementById('totalValue').textContent) || 0;
+            const change = Math.max(0, paid - total);
+            document.getElementById('changeValue').textContent = change.toFixed(2);
+        }
+
+        function finalizeSale() {
+            const totalItems = Object.values(cart).reduce((a, b) => a + b, 0);
+            if (totalItems === 0) {
+                alert('❌ Carrinho vazio!');
+                return;
+            }
+
+            const paid = parseFloat(document.getElementById('amountPaid').value) || 0;
+            const total = totalItems * PRICE;
+            
+            if (paid < total) {
+                alert('❌ Valor pago insuficiente!');
+                return;
+            }
+
+            Object.entries(cart).forEach(([name, qty]) => {
+                stock[name].qty -= qty;
+            });
+
+            sales.unshift({
+                date: new Date().toLocaleString('pt-BR'),
+                items: { ...cart },
+                total: total,
+                paid: paid,
+                change: paid - total
+            });
+
+            cart = {};
+            document.getElementById('amountPaid').value = '';
+            
+            save();
+            renderAll();
+            
+            alert('✅ Venda finalizada com sucesso!');
+        }
+
+        /* ESTOQUE */
+        function renderStock() {
+            const el = document.getElementById('estoqueList');
+            el.innerHTML = '';
+
+            const entries = Object.entries(stock);
+            if (entries.length === 0) {
+                el.innerHTML = '<div class="empty-state"><div class="empty-state-icon">📦</div><p>Nenhum sabor cadastrado</p></div>';
+                return;
+            }
+
+            entries.forEach(([name, data]) => {
+                const item = document.createElement('div');
+                item.className = 'flavor-item';
+                item.innerHTML = `
+                    <div class="flavor-info">
+                        <div class="flavor-emoji">${data.emoji}</div>
+                        <div class="flavor-details">
+                            <div class="flavor-name">${name}</div>
+                            <div class="flavor-qty">${data.qty} unidades</div>
+                        </div>
+                    </div>
+                    <div class="btn-group">
+                        <button class="btn-add" onclick="adjustStock('${name}', 1)">+</button>
+                        <button class="btn-remove" onclick="adjustStock('${name}', -1)">−</button>
+                    </div>
+                `;
+                el.appendChild(item);
+            });
+        }
+
+        function adjustStock(name, change) {
+            stock[name].qty = Math.max(0, stock[name].qty + change);
+            save();
+            renderAll();
+        }
+
+        /* GERENCIAR */
+        function addFlavor() {
+            const name = document.getElementById('newName').value.trim();
+            const emoji = document.getElementById('newEmoji').value.trim();
+            const qty = parseInt(document.getElementById('newQty').value) || 0;
+
+            if (!name) {
+                alert('❌ Digite o nome do sabor!');
+                return;
+            }
+
+            if (stock[name]) {
+                alert('❌ Já existe um sabor com este nome!');
+                return;
+            }
+
+            stock[name] = {
+                emoji: emoji || '🍦',
+                qty: qty
+            };
+
+            document.getElementById('newName').value = '';
+            document.getElementById('newEmoji').value = '';
+            document.getElementById('newQty').value = '10';
+
+            save();
+            renderAll();
+            alert('✅ Sabor adicionado com sucesso!');
+        }
+
+        function renderRemove() {
+            const el = document.getElementById('removeList');
+            el.innerHTML = '';
+
+            const entries = Object.entries(stock);
+            if (entries.length === 0) {
+                el.innerHTML = '<div class="empty-state"><div class="empty-state-icon">📝</div><p>Nenhum sabor cadastrado</p></div>';
+                return;
+            }
+
+            entries.forEach(([name, data]) => {
+                const item = document.createElement('div');
+                item.className = 'flavor-item';
+                item.innerHTML = `
+                    <div class="flavor-info">
+                        <div class="flavor-emoji">${data.emoji}</div>
+                        <div class="flavor-details">
+                            <div class="flavor-name">${name}</div>
+                            <div class="flavor-qty">${data.qty} em estoque</div>
+                        </div>
+                    </div>
+                    <button class="btn-remove" onclick="removeFlavor('${name}')">🗑️ Excluir</button>
+                `;
+                el.appendChild(item);
+            });
+        }
+
+        function removeFlavor(name) {
+            if (!confirm(`Deseja realmente excluir "${name}"?`)) return;
+            delete stock[name];
+            save();
+            renderAll();
+            alert('✅ Sabor excluído com sucesso!');
+        }
+
+        /* HISTÓRICO */
+        function renderHistory() {
+            const el = document.getElementById('historyList');
+            
+            if (sales.length === 0) {
+                el.innerHTML = '<div class="empty-state"><div class="empty-state-icon">📊</div><p>Nenhuma venda registrada</p></div>';
+                return;
+            }
+
+            el.innerHTML = '';
+            sales.forEach(sale => {
+                const item = document.createElement('div');
+                item.className = 'history-item';
+                const itemsList = Object.entries(sale.items)
+                    .map(([name, qty]) => `${stock[name]?.emoji || '🍦'} ${name} x${qty}`)
+                    .join(', ');
+                
+                item.innerHTML = `
+                    <div class="history-date">${sale.date}</div>
+                    <div class="history-items">${itemsList}</div>
+                    <div class="cart-summary" style="margin-top: 8px; font-size: 13px;">
+                        <p><strong>Total:</strong> R$ ${sale.total.toFixed(2)}</p>
+                        <p><strong>Pago:</strong> R$ ${sale.paid.toFixed(2)}</p>
+                        <p><strong>Troco:</strong> R$ ${sale.change.toFixed(2)}</p>
+                    </div>
+                `;
+                el.appendChild(item);
+            });
+        }
+
+        function clearAllSales() {
+            if (!confirm('⚠️ ATENÇÃO!\n\nDeseja apagar TODO o histórico de vendas?\n\nEssa ação NÃO pode ser desfeita.')) return;
+            
+            sales = [];
+            save();
+            renderHistory();
+            updateStats();
+            alert('✅ Histórico apagado com sucesso!');
+        }
+
+        /* WHATSAPP */
+        function copyStockToWhatsApp() {
+            let message = '🌞 Oi, pessoal! Atenção! 🚨🍦\n\n';
+            message += 'Para aliviar esse calor, temos picolés por apenas *R$ 2,20* 😋❄️\n\n';
+            message += '👉 *Sabores disponíveis:*\n\n';
+            
+            const available = Object.entries(stock).filter(([_, data]) => data.qty > 0);
+            
+            if (available.length === 0) {
+                alert('❌ Nenhum sabor disponível no momento!');
+                return;
+            }
+
+            available.forEach(([name, data]) => {
+                const alert = data.qty <= 3 ? ' ⚠️ ÚLTIMAS UNIDADES' : '';
+                message += `${data.emoji} ${name} — ${data.qty} unidades${alert}\n`;
+            });
+            
+            message += '\n🍦 Garanta o seu agora!';
+
+            if (navigator.clipboard) {
+                navigator.clipboard.writeText(message).then(() => {
+                    alert('✅ Texto copiado! Cole no WhatsApp.');
+                }).catch(() => {
+                    fallbackCopy(message);
+                });
+            } else {
+                fallbackCopy(message);
+            }
+        }
+
+        function fallbackCopy(text) {
+            const textarea = document.createElement('textarea');
+            textarea.value = text;
+            textarea.style.position = 'fixed';
+            textarea.style.opacity = '0';
+            document.body.appendChild(textarea);
+            textarea.select();
+            try {
+                document.execCommand('copy');
+                alert('✅ Texto copiado! Cole no WhatsApp.');
+            } catch (err) {
+                alert('❌ Erro ao copiar. Tente novamente.');
+            }
+            document.body.removeChild(textarea);
+        }
+
+        /* RENDER ALL */
+        function renderAll() {
+            renderSales();
+            renderCart();
+            renderStock();
+            renderRemove();
+            updateStats();
+        }
+
+        // Initialize
+        renderAll();
+    </script>
 </body>
 </html>
